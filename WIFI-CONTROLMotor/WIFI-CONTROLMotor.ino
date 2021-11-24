@@ -192,17 +192,7 @@ void loop() {
     moveWheel(PWM_D,setpointWD,pinMotorD,backD);
     TimeWait();//se establece 300 milisegundos tiempo suficente para que el PWM cambie sin afectara a los motores
   //Timewait tambien sirve para hacer media movil de los pulsos.
-    Serial.print(setpointWD);
-    Serial.print(",");
-    Serial.print(wD);
-    Serial.print(",");
-    Serial.print(PWM_D);
-    Serial.print(",");
-    Serial.print(setpointWI);
-    Serial.print(",");
-    Serial.print(wI);
-    Serial.print(",");
-    Serial.println(PWM_I);
+  
   
 }
 
@@ -243,10 +233,14 @@ void op_message()
 }
 void op_moveWheel()
 {
-  
+   
+
   strcpy(operation_send.data,"mensaje recibido");
   operation_send.op=OP_MESSAGE_RECIVE;
   operation_send.id=ID;
+    Udp.beginPacket(ip_server,Udp.remotePort());
+  Udp.write((byte*)&operation_send,operation_send.len+HEADER_LEN);
+  Udp.endPacket();
   string data=server_operation->data;
   char del =',';
   vector<string> vel;
@@ -280,10 +274,7 @@ void op_moveWheel()
   feedForwardI();
     // send a reply, to the IP address and port that sent us the packet we received
   operation_send.len = strlen (operation_send.data);  /* len */
- 
-  Udp.beginPacket(ip_server,Udp.remotePort());
-  Udp.write((byte*)&operation_send,operation_send.len+HEADER_LEN);
-  Udp.endPacket();
+
   
   moveWheel(PWM_D,setpointWD,pinMotorD,backD);
   moveWheel(PWM_I,setpointWI,pinMotorI,backI);
@@ -316,7 +307,7 @@ void TimeWait()
    int ahora=millis();
     int resta=0;
     int despues=0;
-  while(resta<50){
+  while(resta<65){
       despues=millis();
       resta=despues-ahora;
       deltaTimeD=meanFilterD.AddValue(deltaTimeD);
@@ -460,11 +451,7 @@ int pidI(double wI,double Setpoint)
     }
     previousTimeI = currentTimeI;                             // almacenar el tiempo anterior
   }
- /* Serial.print("error");
-        Serial.print(errorI);
-        Serial.print(",");
-        Serial.println(output);
-        */
+
   return output;
   
 }
@@ -487,7 +474,7 @@ double ajusteGyroscope(double z)
 void feedForwardD()
 {
     
-    PWM_D=round((setpointWD-8.658)/0.141);
+    PWM_D=round((setpointWD+3.269)/0.203);
     if(setpointWD==0){
       PWM_D=0;
     }
@@ -498,7 +485,7 @@ void feedForwardD()
 }
 void feedForwardI()
 {
-    PWM_I=round((setpointWI-14.077)/0.112);
+    PWM_I=round((setpointWI+4.828)/0.231);
     if(setpointWI==0){
       PWM_I=0;
     }
